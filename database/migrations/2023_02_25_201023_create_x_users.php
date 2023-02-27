@@ -23,6 +23,7 @@ class CreateXUsers extends Migration
             $table->text('token')->nullable();
             $table->boolean('is_login')->nullable();
             $table->timestamps();
+            $table->index(['user_id', 'username', 'email', 'phone_number', 'created_at']);
 
         });
     }

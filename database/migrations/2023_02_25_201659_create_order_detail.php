@@ -18,6 +18,7 @@ class CreateOrderDetail extends Migration
             $table->timestamp('product_id', 64);
             $table->integer('price')->unsigned()->default(0)->nullable();
             $table->integer('qty')->unsigned()->default(0)->nullable();
+            $table->integer('subtotal')->unsigned()->default(0)->nullable();
             $table->timestamps();
         });
     }
