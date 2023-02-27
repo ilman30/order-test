@@ -34,6 +34,7 @@ $router->group(['prefix' => 'v1'], function () use ($router) {
             Route::post('create',  [OrdersController::class, 'create']);
             Route::get('read',  [OrdersController::class, 'read']);
             Route::delete('cancel',  [OrdersController::class, 'delete']);
+            Route::get('export',  [OrdersController::class, 'export']);
         });
 
     });

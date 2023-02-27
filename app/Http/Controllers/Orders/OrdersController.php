@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Orders;
 
+use App\Exports\OrdersExport;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Controller;
 use App\Models\OrderDetail;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Ramsey\Uuid\Uuid;
+use Maatwebsite\Excel\Facades\Excel;
 
 class OrdersController extends Controller
 {
@@ -153,6 +155,38 @@ class OrdersController extends Controller
             DB::commit();
         } else {
             DB::rollBack();
+        }
+
+        return response()->json($response, $code);
+    }
+
+    public function export(Request $request)
+    {
+        $token = $request->header('Authorization');
+        $user_info = LoginController::getUserInfo($token);
+        $user_id = $user_info[0]['user_id'];
+        $response = array();
+        $order_id = $request->order_id;
+
+        try {
+            $order = Orders::select('order_id')->get();
+            if ($order->count() == null) {
+                $response['status'] = 0;
+                $response['message'] = 'Order not found!';
+                $code = 200;
+            } else {
+                $params['status'] = 2;
+                Orders::where('order_id', $order_id)->where('user_id', $user_id)->update($params);
+                $response['status'] = 1;
+                $response['message'] = 'Order cancelled!';
+                $response['order_id'] = $order->toArray()[0]['order_id'];
+                $code = 200;
+            }
+            return collect($response);
+        } catch (Exception $e) {
+            $response['status'] = 0;
+            $response['message'] = 'Server Error!';
+            $code = 500;
         }
 
         return response()->json($response, $code);
