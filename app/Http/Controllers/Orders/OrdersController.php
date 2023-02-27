@@ -54,7 +54,7 @@ class OrdersController extends Controller
             $params['status'] = 0;
 
             DB::beginTransaction();
-            // try {
+            try {
                 Orders::create($params);
                 if ($countDtl == 0) {
                     $response['status'] = 0;
@@ -67,11 +67,11 @@ class OrdersController extends Controller
                     $response['order_id'] = $params['order_id'];
                     $code = 200;
                 }
-            // } catch (Exception $e) {
-            //     $response['status'] = 0;
-            //     $response['message'] = 'Server Error!';
-            //     $code = 500;
-            // }
+            } catch (Exception $e) {
+                $response['status'] = 0;
+                $response['message'] = 'Server Error!';
+                $code = 500;
+            }
         }
 
         if ($response['status'] == 1) {
@@ -81,5 +81,80 @@ class OrdersController extends Controller
         }
 
         return response()->json($response, 200);
+    }
+
+    public function read(Request $request)
+    {
+        $token = $request->header('Authorization');
+        $user_info = LoginController::getUserInfo($token);
+        $user_id = $user_info[0]['user_id'];
+        $response = array();
+        $order_id = $request->order_id;
+
+        try {
+            $order = Orders::select('order_id', 'order_date', 'total', 'status');
+            if ($order_id == null) {
+                $order = $order->where('user_id', $user_id)->get()->toArray();
+            } else {
+                $order = $order->where('user_id', $user_id)->where('order_id', $order_id)->get()->toArray();
+            }
+
+            if (count($order) == null) {
+                $response['status'] = 0;
+                $response['message'] = 'Order not found!';
+                $code = 200;
+            } else {
+                $order_detail = OrderDetail::select('product_id', 'price', 'qty', 'subtotal')->get()->toArray();
+                $response['status'] = 1;
+                $response['message'] = 'Order found!';
+                $response['data'] = $order;
+                $response['data']['order_detail'] = $order_detail;
+                $code = 200;
+            }
+        } catch (Exception $e) {
+            $response['status'] = 0;
+            $response['message'] = 'Server Error!';
+            $code = 500;
+        }
+
+
+        return response()->json($response, $code);
+    }
+
+    public function delete(Request $request)
+    {
+        $token = $request->header('Authorization');
+        $user_info = LoginController::getUserInfo($token);
+        $user_id = $user_info[0]['user_id'];
+        $response = array();
+        $order_id = $request->order_id;
+
+        try {
+            $order = Orders::select('order_id')->get();
+            if ($order->count() == null) {
+                $response['status'] = 0;
+                $response['message'] = 'Order not found!';
+                $code = 200;
+            } else {
+                $params['status'] = 2;
+                Orders::where('order_id', $order_id)->where('user_id', $user_id)->update($params);
+                $response['status'] = 1;
+                $response['message'] = 'Order cancelled!';
+                $response['order_id'] = $order->toArray()[0]['order_id'];
+                $code = 200;
+            }
+        } catch (Exception $e) {
+            $response['status'] = 0;
+            $response['message'] = 'Server Error!';
+            $code = 500;
+        }
+
+        if ($response['status'] == 1) {
+            DB::commit();
+        } else {
+            DB::rollBack();
+        }
+
+        return response()->json($response, $code);
     }
 }

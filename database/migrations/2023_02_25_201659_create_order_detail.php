@@ -15,7 +15,7 @@ class CreateOrderDetail extends Migration
     {
         Schema::create('order_detail', function (Blueprint $table) {
             $table->string('order_id', 64);
-            $table->timestamp('product_id', 64);
+            $table->string('product_id', 64);
             $table->integer('price')->unsigned()->default(0)->nullable();
             $table->integer('qty')->unsigned()->default(0)->nullable();
             $table->integer('subtotal')->unsigned()->default(0)->nullable();
